@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HRS Edu Hub — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-center">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <img src="assets/logo.svg" alt="HRS" class="brand-logo"/>
+      <h1>HRS Edu Hub</h1>
+      <p class="muted">Free BCA notes, textbooks & video lessons</p>
+    </div>
+
+    <div class="tabs">
+      <button id="tabLogin" class="tab active">Login</button>
+      <button id="tabSignup" class="tab">Sign Up</button>
+    </div>
+
+    <form id="loginForm" class="form">
+      <label>Email</label>
+      <input type="email" id="loginUser" placeholder="you@example.com" required />
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="password" required />
+      <div class="row">
+        <button class="btn primary" id="loginBtn" type="submit">Login</button>
+        <a href="resources.html" id="guestBtn" class="btn">Continue as Guest</a>
+      </div>
+      <p class="muted small"><a href="#" id="forgotLink">Forgot password?</a></p>
+    </form>
+
+    <form id="signupForm" class="form hidden">
+      <label>Full name</label>
+      <input type="text" id="signupName" placeholder="Harsh Raj Singh" required />
+      <label>Email</label>
+      <input type="email" id="signupUser" placeholder="you@example.com" required />
+      <label>Create password</label>
+      <input type="password" id="signupPass" placeholder="choose a strong password" required />
+      <div class="row">
+        <button class="btn primary" id="signupBtn" type="submit">Create Account</button>
+      </div>
+      <p class="muted small">Check your email for verification link after signup.</p>
+    </form>
+
+    <div class="foot">
+      <a href="about.html" class="muted">About</a>
+      <a href="resources.html" class="muted">Explore</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { signupFirebase, loginFirebase, sendPasswordReset, onAuthChange } from './auth-firebase.js';
+
+    const tabLogin = document.getElementById('tabLogin');
+    const tabSignup = document.getElementById('tabSignup');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const forgotLink = document.getElementById('forgotLink');
+
+    tabLogin.addEventListener('click', ()=>{tabLogin.classList.add('active');tabSignup.classList.remove('active');loginForm.classList.remove('hidden');signupForm.classList.add('hidden');});
+    tabSignup.addEventListener('click', ()=>{tabSignup.classList.add('active');tabLogin.classList.remove('active');signupForm.classList.remove('hidden');loginForm.classList.add('hidden');});
+
+    signupForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupUser').value.trim();
+      const pass = document.getElementById('signupPass').value;
+      try{
+        await signupFirebase(name, email, pass);
+        alert('Account created — verification sent. Please check your email.');
+        tabLogin.click();
+      }catch(err){
+        alert('Signup error: ' + err.message);
+      }
+    });
+
+    loginForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      try{
+        const user = await loginFirebase(email, pass);
+        if(!user.emailVerified){
+          alert('Please verify your email before continuing. Verification link was sent on signup.');
+        }
+        window.location.href = 'resources.html';
+      }catch(err){
+        alert('Login error: ' + err.message);
+      }
+    });
+
+    forgotLink.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      const email = prompt('Enter your registered email for password reset:');
+      if(!email) return;
+      try{
+        await sendPasswordReset(email);
+        alert('Password reset email sent. Check your inbox.');
+      }catch(err){
+        alert('Error: ' + err.message);
+      }
+    });
+
+    // optional: track auth state
+    onAuthChange(user=>{
+      if(user){
+        // You can redirect or show user info
+        console.log('Auth active:', user.email);
+      }
+    });
+  </script>
+</body>
+</html>
